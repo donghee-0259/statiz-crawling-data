@@ -1,0 +1,29 @@
+import pandas as pd
+from lxml import html
+import requests
+
+# 크롤링할 웹 페이지의 URL을 지정
+url = "http://www.statiz.co.kr/stat.php?opt=0&sopt=0&re=0&ys=2012&ye=2023&se=0&te=%EB%A1%AF%EB%8D%B0&tm=&ty=0&qu=auto&po=0&as=&ae=&hi=&un=&pl=&da=1&o1=WAR_ALL_ADJ&o2=TPA&de=1&lr=1&tr=&cv=&ml=1&sn=30&si=&cn="
+
+# 웹 페이지 내용 가져오기
+response = requests.get(url)
+tree = html.fromstring(response.text)
+
+# XPath를 사용하여 원하는 테이블을 찾음
+table = tree.xpath('//*[@id="mytable"]')[0]
+
+# 데이터를 저장할 빈 리스트 생성
+data = []
+
+# 테이블의 각 행을 순회하며 데이터 추출
+for row in table.xpath('.//tr'):
+    columns = row.xpath('.//td')
+    row_data = [column.text_content() for column in columns if column.text_content()]
+    if row_data:
+        data.append(row_data)
+
+# 데이터를 DataFrame으로 변환
+df = pd.DataFrame(data[1:], columns=data[0])
+
+# DataFrame을 CSV 파일로 저장
+df.to_csv('lotte_hit_stats.csv', index=False)
